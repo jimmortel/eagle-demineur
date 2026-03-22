@@ -81,18 +81,42 @@
             }
         }
 
-        async function payForHint() {
+                async function payForHint() {
             try {
-                await window.farcaster.sdk.actions.eth_sendTransaction({
-                    params: { to: "GU5dNvMQKoUiVJvZ5HUgrv3CxtrR5ujxfHK2HPT6Z6bV", value: "5000000000000000" } 
-                });
-                alert("Indice : Les mines sont rarement sur les bords !");
+                if (window.farcaster && window.farcaster.sdk) {
+                    await window.farcaster.sdk.actions.eth_sendTransaction({
+                        params: { 
+                            to: "GU5dNvMQKoUiVJvZ5HUgrv3CxtrR5ujxfHK2HPT6Z6bV", 
+                            value: "5000000000000000" 
+                        } 
+                    });
+                    alert("Indice : Les mines sont rarement sur les bords !");
+                } else {
+                    alert("Paiement simulé : Sur Farcaster, cela ouvrirait votre wallet.");
+                }
             } catch (e) { console.error(e); }
         }
 
         function shareWin() {
-            window.farcaster.sdk.actions.openUrl(`https://warpcast.com/~/compose?text=J'ai survécu au Démineur Crypto ! 💣 Viens tester tes réflexes ici :&embeds[]=${window.location.href}`);
+            const shareUrl = `https://warpcast.com/~/compose?text=J'ai survécu au Eagle-Demineur ! 🦅💣 Viens tester tes réflexes :&embeds[]=${window.location.href}`;
+            if (window.farcaster && window.farcaster.sdk) {
+                window.farcaster.sdk.actions.openUrl(shareUrl);
+            } else {
+                window.open(shareUrl, '_blank');
+            }
         }
+
+        async function init() {
+            try {
+                if (window.farcaster && window.farcaster.sdk) {
+                    await window.farcaster.sdk.actions.ready();
+                }
+            } catch (e) {
+                console.log("Mode test hors-Farcaster");
+            }
+            newGame();
+        }
+
         init();
     </script>
 </body>
