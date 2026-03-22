@@ -1,0 +1,16 @@
+{
+  "accountAssociation": {
+    "header": "eyJhbGciOiJ...", 
+    "payload": "eyJkb21haW4iOi...",
+    "signature": "..."
+  },
+  "frame": {
+    "version": "1",
+    "name": "Crypto Minesweeper",
+    "iconUrl": "https://votre-projet.vercel.app/icon.png",
+    "homeUrl": "https://votre-projet.vercel.app",
+    "imageUrl": "https://votre-projet.vercel.app/splash.png",
+    "buttonTitle": "Démineur & Gagne",
+    "sdkUrl": "https://unpkg.com/@farcaster/frame-sdk/dist/index.js"
+  }
+}
