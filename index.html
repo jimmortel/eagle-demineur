@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeper Crypto</title>
+    <script src="https://unpkg.com/@farcaster/frame-sdk/dist/index.js"></script>
+    <style>
+        :root { --bg: #0f172a; --accent: #8b5cf6; --cell: #1e293b; --text: #f8fafc; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        h1 { font-size: 1.5rem; margin-bottom: 10px; color: var(--accent); }
+        #status { margin-bottom: 15px; font-weight: bold; }
+        #grid { display: grid; grid-template-columns: repeat(8, 35px); gap: 4px; padding: 10px; background: #334155; border-radius: 8px; }
+        .cell { width: 35px; height: 35px; background: var(--cell); display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .revealed { background: #475569; cursor: default; }
+        .mine { background: #ef4444 !important; }
+        .controls { margin-top: 20px; display: flex; gap: 10px; }
+        button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-pay { background: var(--accent); color: white; }
+        .btn-share { background: #10b981; color: white; display: none; }
+    </style>
+</head>
+<body>
+    <h1>💣 MINESWEEPER CRYPTO</h1>
+    <div id="status">Trouvez les mines sans exploser !</div>
+    <div id="grid"></div>
+    <div class="controls">
+        <button class="btn-pay" onclick="payForHint()">💡 Indice (0.005 SOL)</button>
+        <button id="shareBtn" class="btn-share" onclick="shareWin()">📢 Partager mon Score</button>
+    </div>
+        <script>
+        const ROWS = 8, COLS = 8, MINES = 10;
+        let grid = [], revealedCount = 0, gameOver = false;
+
+        async function init() {
+            await window.farcaster.sdk.actions.ready();
+            newGame();
+        }
+
+        function newGame() {
+            gameOver = false; revealedCount = 0;
+            document.getElementById('grid').innerHTML = '';
+            document.getElementById('status').innerText = "Bonne chance !";
+            document.getElementById('shareBtn').style.display = 'none';
+            generateGrid();
+        }
+
+        function generateGrid() {
+            grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            let planted = 0;
+            while (planted < MINES) {
+                let r = Math.floor(Math.random() * ROWS), c = Math.floor(Math.random() * COLS);
+                if (grid[r][c] !== 'M') { grid[r][c] = 'M'; planted++; }
+            }
+            const gridEl = document.getElementById('grid');
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.onclick = () => reveal(r, c, cell);
+                    gridEl.appendChild(cell);
+                }
+            }
+        }
+                  function reveal(r, c, el) {
+            if (gameOver || el.classList.contains('revealed')) return;
+            if (grid[r][c] === 'M') {
+                el.classList.add('mine'); el.innerText = '💣';
+                document.getElementById('status').innerText = "BOOM ! Game Over.";
+                gameOver = true;
+            } else {
+                let count = 0;
+                for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) if(grid[r+i]?.[c+j] === 'M') count++;
+                el.classList.add('revealed'); el.innerText = count || '';
+                revealedCount++;
+                if (revealedCount === (ROWS * COLS) - MINES) {
+                    document.getElementById('status').innerText = "GAGNÉ ! 🏆";
+                    document.getElementById('shareBtn').style.display = 'block';
+                    gameOver = true;
+                }
+            }
+        }
+
+        async function payForHint() {
+            try {
+                await window.farcaster.sdk.actions.eth_sendTransaction({
+                    params: { to: "GU5dNvMQKoUiVJvZ5HUgrv3CxtrR5ujxfHK2HPT6Z6bV", value: "5000000000000000" } 
+                });
+                alert("Indice : Les mines sont rarement sur les bords !");
+            } catch (e) { console.error(e); }
+        }
+
+        function shareWin() {
+            window.farcaster.sdk.actions.openUrl(`https://warpcast.com/~/compose?text=J'ai survécu au Démineur Crypto ! 💣 Viens tester tes réflexes ici :&embeds[]=${window.location.href}`);
+        }
+        init();
+    </script>
+</body>
+</html>
