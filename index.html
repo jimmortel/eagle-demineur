@@ -3,44 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minesweeper Crypto</title>
+    <title>Minesweeper TALON 🦅</title>
     <script src="https://unpkg.com/@farcaster/frame-sdk/dist/index.js"></script>
     <style>
-        :root { --bg: #0f172a; --accent: #8b5cf6; --cell: #1e293b; --text: #f8fafc; }
+        :root { --bg: #0f172a; --accent: #3b82f6; --cell: #1e293b; --text: #f8fafc; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        h1 { font-size: 1.5rem; margin-bottom: 10px; color: var(--accent); }
-        #status { margin-bottom: 15px; font-weight: bold; }
-        #grid { display: grid; grid-template-columns: repeat(8, 35px); gap: 4px; padding: 10px; background: #334155; border-radius: 8px; }
-        .cell { width: 35px; height: 35px; background: var(--cell); display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        h1 { font-size: 1.5rem; margin-bottom: 10px; color: var(--accent); font-weight: 900; }
+        #status { margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; }
+        #grid { display: grid; grid-template-columns: repeat(8, 35px); gap: 4px; padding: 10px; background: #334155; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .cell { width: 35px; height: 35px; background: var(--cell); display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .cell:active { transform: scale(0.9); }
         .revealed { background: #475569; cursor: default; }
         .mine { background: #ef4444 !important; }
-        .controls { margin-top: 20px; display: flex; gap: 10px; }
-        button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-pay { background: var(--accent); color: white; }
+        .controls { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; width: 80%; max-width: 280px; }
+        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.8rem; }
+        .btn-pay { background: #f59e0b; color: #000; }
         .btn-share { background: #10b981; color: white; display: none; }
+        .btn-reset { background: #475569; color: white; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <h1>💣 MINESWEEPER CRYPTO</h1>
-    <div id="status">Trouvez les mines sans exploser !</div>
+    <h1>🦅 TALON MINES</h1>
+    <div id="status">Évitez les mines pour la TALON Nation !</div>
+    
     <div id="grid"></div>
+
     <div class="controls">
-        <button class="btn-pay" onclick="payForHint()">💡 Indice (0.005 SOL)</button>
+        <button class="btn-pay" onclick="payForHint()">💡 Indice (1 $TALON)</button>
         <button id="shareBtn" class="btn-share" onclick="shareWin()">📢 Partager mon Score</button>
+        <button class="btn-reset" onclick="newGame()">Nouvelle Partie</button>
     </div>
-        <script>
+
+    <script>
         const ROWS = 8, COLS = 8, MINES = 10;
         let grid = [], revealedCount = 0, gameOver = false;
-
-        async function init() {
-            await window.farcaster.sdk.actions.ready();
-            newGame();
-        }
 
         function newGame() {
             gameOver = false; revealedCount = 0;
             document.getElementById('grid').innerHTML = '';
-            document.getElementById('status').innerText = "Bonne chance !";
+            document.getElementById('status').innerText = "Bonne chance, Pilot !";
+            document.getElementById('status').style.color = "white";
             document.getElementById('shareBtn').style.display = 'none';
             generateGrid();
         }
@@ -62,11 +64,13 @@
                 }
             }
         }
-                  function reveal(r, c, el) {
+
+        function reveal(r, c, el) {
             if (gameOver || el.classList.contains('revealed')) return;
             if (grid[r][c] === 'M') {
                 el.classList.add('mine'); el.innerText = '💣';
                 document.getElementById('status').innerText = "BOOM ! Game Over.";
+                document.getElementById('status').style.color = "#ef4444";
                 gameOver = true;
             } else {
                 let count = 0;
@@ -75,30 +79,32 @@
                 revealedCount++;
                 if (revealedCount === (ROWS * COLS) - MINES) {
                     document.getElementById('status').innerText = "GAGNÉ ! 🏆";
+                    document.getElementById('status').style.color = "#10b981";
                     document.getElementById('shareBtn').style.display = 'block';
                     gameOver = true;
                 }
             }
         }
 
-                async function payForHint() {
+        async function payForHint() {
             try {
                 if (window.farcaster && window.farcaster.sdk) {
+                    // Transaction sur le réseau BASE vers ton adresse Primary
                     await window.farcaster.sdk.actions.eth_sendTransaction({
                         params: { 
-                            to: "GU5dNvMQKoUiVJvZ5HUgrv3CxtrR5ujxfHK2HPT6Z6bV", 
-                            value: "5000000000000000" 
+                            to: "0x872b8348dF29fE38D331CBe9048a60424578fA83", 
+                            value: "10000000000000000" // Équivalent d'une petite unité sur Base
                         } 
                     });
-                    alert("Indice : Les mines sont rarement sur les bords !");
+                    alert("Indice de Pilot : Concentrez-vous sur les coins, ils sont souvent sûrs au début !");
                 } else {
-                    alert("Paiement simulé : Sur Farcaster, cela ouvrirait votre wallet.");
+                    alert("Mode Test : Le paiement de 1 $TALON sera activé sur Farcaster.");
                 }
             } catch (e) { console.error(e); }
         }
 
         function shareWin() {
-            const shareUrl = `https://warpcast.com/~/compose?text=J'ai survécu au Eagle-Demineur ! 🦅💣 Viens tester tes réflexes :&embeds[]=${window.location.href}`;
+            const shareUrl = `https://warpcast.com/~/compose?text=J'ai survécu au TALON Mines ! 🦅💣 Viens défier le sort :&embeds[]=${window.location.href}`;
             if (window.farcaster && window.farcaster.sdk) {
                 window.farcaster.sdk.actions.openUrl(shareUrl);
             } else {
@@ -111,9 +117,7 @@
                 if (window.farcaster && window.farcaster.sdk) {
                     await window.farcaster.sdk.actions.ready();
                 }
-            } catch (e) {
-                console.log("Mode test hors-Farcaster");
-            }
+            } catch (e) { console.log("Mode test hors-Farcaster"); }
             newGame();
         }
 
