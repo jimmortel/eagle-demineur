@@ -2,48 +2,63 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Minesweeper TALON 🦅</title>
-    <script src="https://unpkg.com/@farcaster/frame-sdk/dist/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/index.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="access.js"></script>
+    
     <style>
         :root { --bg: #0f172a; --accent: #3b82f6; --cell: #1e293b; --text: #f8fafc; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        h1 { font-size: 1.5rem; margin-bottom: 10px; color: var(--accent); font-weight: 900; }
-        #status { margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; touch-action: none; }
+        h1 { font-size: 1.5rem; margin-bottom: 10px; color: var(--accent); font-weight: 900; text-transform: uppercase; }
+        #status { margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; text-align: center; height: 20px; }
         #grid { display: grid; grid-template-columns: repeat(8, 35px); gap: 4px; padding: 10px; background: #334155; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .cell { width: 35px; height: 35px; background: var(--cell); display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
-        .cell:active { transform: scale(0.9); }
-        .revealed { background: #475569; cursor: default; }
+        .cell { width: 35px; height: 35px; background: var(--cell); display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; user-select: none; }
+        .revealed { background: #475569; cursor: default; color: #60a5fa; }
         .mine { background: #ef4444 !important; }
         .controls { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; width: 80%; max-width: 280px; }
-        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.8rem; }
+        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.75rem; }
         .btn-pay { background: #f59e0b; color: #000; }
-        .btn-share { background: #10b981; color: white; display: none; }
-        .btn-reset { background: #475569; color: white; margin-top: 5px; }
+        .btn-reset { background: #475569; color: white; }
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; }
+        #start-btn { background: #3b82f6; color: white; padding: 20px 40px; border-radius: 12px; font-weight: 900; border: 2px solid white; cursor: pointer; }
     </style>
 </head>
 <body>
+    <div id="overlay">
+        <button id="start-btn" onclick="handleEagleStart()">Déployer le Radar (10 $TALON) 🦅</button>
+    </div>
+
     <h1>🦅 TALON MINES</h1>
-    <div id="status">Évitez les mines pour la TALON Nation !</div>
+    <div id="status">Chargement du système...</div>
     
     <div id="grid"></div>
 
     <div class="controls">
-        <button class="btn-pay" onclick="payForHint()">💡 Indice (1 $TALON)</button>
-        <button id="shareBtn" class="btn-share" onclick="shareWin()">📢 Partager mon Score</button>
-        <button class="btn-reset" onclick="newGame()">Nouvelle Partie</button>
+        <button class="btn-pay" onclick="payForHint()">📡 Scan Radar (1 $TALON)</button>
+        <button class="btn-reset" onclick="location.reload()">Nouvelle Mission</button>
     </div>
-
-    <script>
+        <script>
         const ROWS = 8, COLS = 8, MINES = 10;
         let grid = [], revealedCount = 0, gameOver = false;
+
+        const SUPABASE_URL = "https://rjkyjqmydriagpiatbsr.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqa3lqcW15ZHJpYWdwaWF0YnNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMzQ5MTEsImV4cCI6MjA4OTYxMDkxMX0.4-uEBo_SFqfMgPpTuDQRxTYLeUoI_ZMZlwtkBJzK_X0";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function handleEagleStart() {
+            const access = await checkGameAccess('mines');
+            if(access) {
+                document.getElementById('overlay').style.display = 'none';
+                newGame();
+            }
+        }
 
         function newGame() {
             gameOver = false; revealedCount = 0;
             document.getElementById('grid').innerHTML = '';
-            document.getElementById('status').innerText = "Bonne chance, Pilot !";
-            document.getElementById('status').style.color = "white";
-            document.getElementById('shareBtn').style.display = 'none';
+            document.getElementById('status').innerText = "Zone sécurisée. À vous, Pilot.";
             generateGrid();
         }
 
@@ -59,6 +74,7 @@
                 for (let c = 0; c < COLS; c++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
+                    cell.id = `cell-${r}-${c}`;
                     cell.onclick = () => reveal(r, c, cell);
                     gridEl.appendChild(cell);
                 }
@@ -69,59 +85,49 @@
             if (gameOver || el.classList.contains('revealed')) return;
             if (grid[r][c] === 'M') {
                 el.classList.add('mine'); el.innerText = '💣';
-                document.getElementById('status').innerText = "BOOM ! Game Over.";
+                document.getElementById('status').innerText = "UNITÉ PERDUE ! BOOM.";
                 document.getElementById('status').style.color = "#ef4444";
                 gameOver = true;
+                setTimeout(() => location.reload(), 2000);
             } else {
                 let count = 0;
                 for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) if(grid[r+i]?.[c+j] === 'M') count++;
                 el.classList.add('revealed'); el.innerText = count || '';
                 revealedCount++;
-                if (revealedCount === (ROWS * COLS) - MINES) {
-                    document.getElementById('status').innerText = "GAGNÉ ! 🏆";
-                    document.getElementById('status').style.color = "#10b981";
-                    document.getElementById('shareBtn').style.display = 'block';
-                    gameOver = true;
-                }
+                if (revealedCount === (ROWS * COLS) - MINES) win();
+            }
+        }
+
+        async function win() {
+            gameOver = true;
+            document.getElementById('status').innerText = "MISSION RÉUSSIE ! 🏆";
+            const pseudo = prompt("Pseudo pour la Nation :");
+            if(pseudo) {
+                await supabaseClient.from('leaderboard').insert([{ username: pseudo, score: 1000, game: 'mines' }]);
+                window.location.href = 'hall.html';
             }
         }
 
         async function payForHint() {
-            try {
-                if (window.farcaster && window.farcaster.sdk) {
-                    // Transaction sur le réseau BASE vers ton adresse Primary
-                    await window.farcaster.sdk.actions.eth_sendTransaction({
-                        params: { 
-                            to: "0x872b8348dF29fE38D331CBe9048a60424578fA83", 
-                            value: "10000000000000000" // Équivalent d'une petite unité sur Base
-                        } 
-                    });
-                    alert("Indice de Pilot : Concentrez-vous sur les coins, ils sont souvent sûrs au début !");
-                } else {
-                    alert("Mode Test : Le paiement de 1 $TALON sera activé sur Farcaster.");
+            if(gameOver) return;
+            if (confirm("Utiliser 1 $TALON pour scanner une zone sûre ?")) {
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                const signer = await provider.getSigner();
+                if (await executeTalonPayment(signer, 1)) {
+                    // Trouver une case vide non révélée
+                    for(let r=0; r<ROWS; r++) {
+                        for(let c=0; c<COLS; c++) {
+                            const el = document.getElementById(`cell-${r}-${c}`);
+                            if(grid[r][c] !== 'M' && !el.classList.contains('revealed')) {
+                                el.style.boxShadow = "0 0 15px #f59e0b";
+                                alert("Radar : Zone sûre détectée (marquée en jaune) !");
+                                return;
+                            }
+                        }
+                    }
                 }
-            } catch (e) { console.error(e); }
-        }
-
-        function shareWin() {
-            const shareUrl = `https://warpcast.com/~/compose?text=J'ai survécu au TALON Mines ! 🦅💣 Viens défier le sort :&embeds[]=${window.location.href}`;
-            if (window.farcaster && window.farcaster.sdk) {
-                window.farcaster.sdk.actions.openUrl(shareUrl);
-            } else {
-                window.open(shareUrl, '_blank');
             }
         }
-
-        async function init() {
-            try {
-                if (window.farcaster && window.farcaster.sdk) {
-                    await window.farcaster.sdk.actions.ready();
-                }
-            } catch (e) { console.log("Mode test hors-Farcaster"); }
-            newGame();
-        }
-
-        init();
     </script>
 </body>
 </html>
